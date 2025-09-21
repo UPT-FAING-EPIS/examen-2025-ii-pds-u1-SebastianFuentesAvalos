@@ -34,6 +34,11 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
+      - name: Clean previous builds
+        run: |
+          cd backend/EcommerceApi
+          dotnet clean
+
       - name: Restore dependencies
         run: |
           cd backend/EcommerceApi
@@ -95,6 +100,49 @@ jobs:
         run: |
           cd frontend
           npm run build
+
+      - name: Prepare Azure deployment files
+        run: |
+          cd frontend/dist
+          # Crear web.config para Azure App Service
+          cat > web.config << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <configuration>
+            <system.webServer>
+              <rewrite>
+                <rules>
+                  <rule name="Handle History Mode and hash mode" stopProcessing="true">
+                    <match url="(.*)" />
+                    <conditions logicalGrouping="MatchAll">
+                      <add input="{REQUEST_FILENAME}" matchType="IsFile" negate="true" />
+                      <add input="{REQUEST_FILENAME}" matchType="IsDirectory" negate="true" />
+                    </conditions>
+                    <action type="Rewrite" url="/" />
+                  </rule>
+                </rules>
+              </rewrite>
+            </system.webServer>
+          </configuration>
+          EOF
+          
+          # Crear package.json para Azure
+          cat > package.json << 'EOF'
+          {
+            "name": "ecommerce-frontend-dist",
+            "version": "1.0.0",
+            "description": "Built Vue.js frontend for e-commerce application",
+            "main": "index.html",
+            "scripts": {
+              "start": "npx serve -s . -p $PORT"
+            },
+            "dependencies": {
+              "serve": "^14.2.0"
+            },
+            "engines": {
+              "node": "20.x"
+            }
+          }
+          EOF
 
       - name: Upload frontend artifact
         id: upload

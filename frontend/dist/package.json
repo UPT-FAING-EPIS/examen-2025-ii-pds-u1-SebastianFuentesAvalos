@@ -1,0 +1,15 @@
+{
+  "name": "ecommerce-frontend-dist",
+  "version": "1.0.0",
+  "description": "Built Vue.js frontend for e-commerce application",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve -s . -p $PORT"
+  },
+  "dependencies": {
+    "serve": "^14.2.0"
+  },
+  "engines": {
+    "node": "20.x"
+  }
+}
