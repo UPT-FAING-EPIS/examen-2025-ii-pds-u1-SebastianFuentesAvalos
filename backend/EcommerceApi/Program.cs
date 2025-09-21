@@ -6,12 +6,32 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Add CORS configuration
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy
+            .WithOrigins(
+                "https://sebastian-ecommerce-web-g7g9fbgrdeh7ftbp.eastus-01.azurewebsites.net",
+                "http://localhost:5173",
+                "http://localhost:3000"
+            )
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials();
+    });
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 // Enable Swagger in all environments for API testing
 app.UseSwagger();
 app.UseSwaggerUI();
+
+// Enable CORS before other middleware
+app.UseCors("AllowFrontend");
 
 app.UseHttpsRedirection();
 
