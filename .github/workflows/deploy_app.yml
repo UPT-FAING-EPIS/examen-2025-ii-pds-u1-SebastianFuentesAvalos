@@ -13,6 +13,9 @@ on:
 env:
   AZURE_WEBAPP_NAME_API: 'sebastian-ecommerce-api'     # Nombre del App Service del backend
   AZURE_WEBAPP_NAME_WEB: 'sebastian-ecommerce-web'     # Nombre del App Service del frontend
+  AZURE_RESOURCE_GROUP_API: 'sebastian-ecommerce-api_group'
+  AZURE_RESOURCE_GROUP_WEB: 'sebastian-ecommerce-web_group-9df4'
+  AZURE_SUBSCRIPTION_ID: '25a89e19-1e5d-454b-8146-1ec4d976f554'
   DOTNET_VERSION: '8.0.x'
   NODE_VERSION: '20'
 
@@ -168,10 +171,12 @@ jobs:
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
+          
       - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v2
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME_API }}
+          resource-group-name: ${{ env.AZURE_RESOURCE_GROUP_API }}
           package: ./backend-app
       - name: Configure App Settings
         uses: azure/appservice-settings@v1
@@ -209,10 +214,12 @@ jobs:
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
+          
       - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v2
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME_WEB }}
+          resource-group-name: ${{ env.AZURE_RESOURCE_GROUP_WEB }}
           package: ./frontend-app
 
   # ==================================================
@@ -227,8 +234,8 @@ jobs:
           echo "## 🚀 Deployment Complete!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### ✅ Deployed Services" >> $GITHUB_STEP_SUMMARY
-          echo "- **Backend API**: https://${{ env.AZURE_WEBAPP_NAME_API }}.azurewebsites.net" >> $GITHUB_STEP_SUMMARY
-          echo "- **Frontend Web**: https://${{ env.AZURE_WEBAPP_NAME_WEB }}.azurewebsites.net" >> $GITHUB_STEP_SUMMARY
+          echo "- **Backend API**: https://sebastian-ecommerce-api-cneebwapd4becrgf.eastus-01.azurewebsites.net/swagger" >> $GITHUB_STEP_SUMMARY
+          echo "- **Frontend Web**: https://sebastian-ecommerce-web-g7g9fbgrdeh7ftbp.eastus-01.azurewebsites.net" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### � Tech Stack" >> $GITHUB_STEP_SUMMARY
           echo "- **Backend**: .NET 8 Web API" >> $GITHUB_STEP_SUMMARY
