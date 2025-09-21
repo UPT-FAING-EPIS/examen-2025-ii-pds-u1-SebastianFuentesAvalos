@@ -5,7 +5,6 @@
       <div class="nav-links">
         <router-link to="/products">Productos</router-link>
         <router-link to="/cart">Carrito</router-link>
-        <router-link to="/orders">Pedidos</router-link>
       </div>
     </nav>
     

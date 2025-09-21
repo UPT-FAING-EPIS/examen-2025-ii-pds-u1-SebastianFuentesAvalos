@@ -44,7 +44,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 
 interface CartItem {
   id: number
@@ -54,11 +54,21 @@ interface CartItem {
   imageUrl: string
 }
 
-const cartItems = ref<CartItem[]>([
-  // Datos de ejemplo
-  { id: 1, name: 'Smartphone Samsung', price: 699.99, quantity: 1, imageUrl: 'https://via.placeholder.com/300' },
-  { id: 2, name: 'Camiseta Nike', price: 29.99, quantity: 2, imageUrl: 'https://via.placeholder.com/300' }
-])
+// Carrito iniciado vacío - se carga desde localStorage
+const cartItems = ref<CartItem[]>([])
+
+// Cargar carrito desde localStorage al montar el componente
+onMounted(() => {
+  const savedCart = localStorage.getItem('cart')
+  if (savedCart) {
+    cartItems.value = JSON.parse(savedCart)
+  }
+})
+
+// Función para guardar carrito en localStorage
+const saveCart = () => {
+  localStorage.setItem('cart', JSON.stringify(cartItems.value))
+}
 
 const cartTotal = computed(() => {
   return cartItems.value.reduce((total, item) => total + (item.price * item.quantity), 0)
@@ -68,6 +78,8 @@ const updateQuantity = (item: CartItem, change: number) => {
   item.quantity += change
   if (item.quantity <= 0) {
     removeItem(item)
+  } else {
+    saveCart()
   }
 }
 
@@ -75,6 +87,7 @@ const removeItem = (item: CartItem) => {
   const index = cartItems.value.findIndex(i => i.id === item.id)
   if (index > -1) {
     cartItems.value.splice(index, 1)
+    saveCart()
   }
 }
 

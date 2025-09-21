@@ -75,8 +75,32 @@ const loadProducts = async () => {
 }
 
 const addToCart = (product: Product) => {
+  // Obtener carrito actual del localStorage
+  const savedCart = localStorage.getItem('cart')
+  let cartItems = savedCart ? JSON.parse(savedCart) : []
+  
+  // Verificar si el producto ya está en el carrito
+  const existingItem = cartItems.find((item: any) => item.id === product.id)
+  
+  if (existingItem) {
+    // Si ya existe, incrementar cantidad
+    existingItem.quantity += 1
+  } else {
+    // Si no existe, agregar nuevo item
+    cartItems.push({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      quantity: 1,
+      imageUrl: product.imageUrl
+    })
+  }
+  
+  // Guardar carrito actualizado
+  localStorage.setItem('cart', JSON.stringify(cartItems))
+  
+  // Mostrar mensaje de confirmación
   alert(`${product.name} agregado al carrito`)
-  // Aquí conectarías con el store de Pinia
 }
 
 onMounted(() => {

@@ -4,13 +4,11 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import ProductsView from './views/ProductsView.vue'
 import CartView from './views/CartView.vue'
-import OrdersView from './views/OrdersView.vue'
 
 const routes = [
   { path: '/', redirect: '/products' },
   { path: '/products', component: ProductsView },
-  { path: '/cart', component: CartView },
-  { path: '/orders', component: OrdersView }
+  { path: '/cart', component: CartView }
 ]
 
 const router = createRouter({
