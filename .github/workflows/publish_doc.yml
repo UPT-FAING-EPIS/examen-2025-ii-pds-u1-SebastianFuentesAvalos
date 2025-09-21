@@ -1268,30 +1268,25 @@ jobs:
           cd docs
           docfx build docfx.json
 
-      - name: Setup Pages
+      - name: Setup Pages (Optional)
         uses: actions/configure-pages@v4
         with:
           enablement: true
           token: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true
 
-      - name: Manual Pages Setup Instructions
-        if: failure()
-        run: |
-          echo "⚠️  GitHub Pages setup automático falló."
-          echo ""
-          echo "Por favor configura GitHub Pages manualmente:"
-          echo "1. Ve a Settings → Pages en tu repositorio"
-          echo "2. En 'Source', selecciona 'GitHub Actions'"
-          echo "3. Guarda los cambios"
-          echo "4. Re-ejecuta este workflow"
-          echo ""
-          echo "URL del repositorio: https://github.com/${{ github.repository }}/settings/pages"
+      - name: Upload Documentation as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentation-site
+          path: docs/_site
+          retention-days: 30
 
-      - name: Upload to GitHub Pages
+      - name: Upload to GitHub Pages (if enabled)
         uses: actions/upload-pages-artifact@v3
         with:
           path: docs/_site
+        continue-on-error: true
 
   Deploy-Documentation:
     needs: Generate-Documentation
@@ -1300,46 +1295,27 @@ jobs:
       pages: write
       id-token: write
       contents: write
+    if: github.repository_owner == github.actor
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+        continue-on-error: true
 
-      - name: Update README with documentation link
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Add documentation link to README
+      - name: Deployment Status
         run: |
-          if ! grep -q "📚 Documentación" README.md; then
-            cat >> README.md << 'EOF'
-
-          ## 📚 Documentación
-
-          La documentación completa del proyecto está disponible en: [GitHub Pages](https://upt-faing-epis.github.io/examen-2025-ii-pds-u1-SebastianFuentesAvalos/)
-
-          ### Secciones disponibles:
-          - 🔧 **API Reference**: Documentación completa de la API
-          - 🏛️ **Arquitectura**: Diagramas y explicación del sistema
-          - 🗄️ **Base de Datos**: Esquema y procedimientos
-          - 🎨 **Frontend**: Componentes y guías Vue.js
-          - 🚀 **Despliegue**: Guías de configuración Azure
-
-          EOF
-
-            git config --local user.email "action@github.com"
-            git config --local user.name "GitHub Action - Documentation"
-            git add README.md
-            git commit -m "docs: add documentation link [skip ci]" || echo "No changes to commit"
-            git push || echo "Nothing to push"
+          if [ "${{ steps.deployment.outcome }}" == "success" ]; then
+            echo "✅ Documentación desplegada en GitHub Pages"
+            echo "🌐 URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
+          else
+            echo "⚠️  GitHub Pages no está disponible en este repositorio"
+            echo "📦 La documentación está disponible como artefacto descargable"
+            echo "💡 Ve a la pestaña Actions → este workflow → 'documentation-site' para descargar"
           fi
 
       - name: Publish documentation summary
         run: |
-            echo "## 📚 Documentation Published Successfully" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "🌐 **Documentation URL**: [View Documentation](https://upt-faing-epis.github.io/examen-2025-ii-pds-u1-SebastianFuentesAvalos/)" >> $GITHUB_STEP_SUMMARY
+            echo "## 📚 Documentation Generated Successfully" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "### Generated Documentation Includes:" >> $GITHUB_STEP_SUMMARY
             echo "- ✅ **API Reference** - Auto-generated from source code" >> $GITHUB_STEP_SUMMARY
@@ -1349,4 +1325,5 @@ jobs:
             echo "- ✅ **Deployment Guide** - Azure configuration steps" >> $GITHUB_STEP_SUMMARY
             echo "- ✅ **Development Guide** - Local setup and workflows" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "📱 The documentation is responsive and includes search functionality." >> $GITHUB_STEP_SUMMARY
+            echo "� **Download**: Ve a la pestaña Actions y descarga el artefacto 'documentation-site'" >> $GITHUB_STEP_SUMMARY
+            echo "🌐 **Local Preview**: Descomprime el archivo y abre index.html en tu navegador" >> $GITHUB_STEP_SUMMARY
