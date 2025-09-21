@@ -49,15 +49,8 @@ jobs:
         run: |
           mkdir -p docs
           mkdir -p docs/api
-          mkdir -p docs/architecture
-          mkdir -p docs/database
-          mkdir -p docs/frontend
-          mkdir -p docs/deployment
-
-      - name: Initialize DocFX project
-        run: |
-          cd docs
-          docfx init -q -o . --name "E-commerce Documentation" --source ../backend/EcommerceApi
+          mkdir -p docs/articles
+          mkdir -p docs/images
 
       - name: Configure DocFX
         run: |
@@ -1231,17 +1224,11 @@ jobs:
           - **Azure Storage Explorer**: Gestión de blobs
           EOF
 
-      - name: Generate API documentation (if source exists)
+      - name: Generate API documentation
         run: |
-          # Si existen archivos .cs, generar documentación de API
-          if find . -name "*.cs" -type f | head -1 | grep -q .; then
-            echo "Generando documentación de API..."
-            cd docs
-            docfx metadata
-          else
-            echo "No se encontraron archivos .cs, creando API placeholder..."
-            mkdir -p docs/api
-            cat > docs/api/index.md << 'EOF'
+          # Crear documentación de API estática
+          mkdir -p docs/api
+          cat > docs/api/index.md << 'EOF'
           # API Reference
 
           La documentación de la API se generará automáticamente cuando el código fuente esté disponible.
@@ -1273,12 +1260,11 @@ jobs:
 
           La documentación completa con esquemas y ejemplos se generará automáticamente con el código fuente.
           EOF
-          fi
 
       - name: Build documentation with DocFX
         run: |
           cd docs
-          docfx build docfx.json --serve
+          docfx build docfx.json
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
