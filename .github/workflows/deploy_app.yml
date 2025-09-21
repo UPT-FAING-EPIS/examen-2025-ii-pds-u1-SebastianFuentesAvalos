@@ -172,6 +172,15 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
           
+      - name: Configure Deployment Source for Backend
+        run: |
+          az webapp deployment source config \
+            --name ${{ env.AZURE_WEBAPP_NAME_API }} \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP_API }} \
+            --repo-url https://github.com/UPT-FAING-EPIS/examen-2025-ii-pds-u1-SebastianFuentesAvalos \
+            --branch main \
+            --git-token ${{ secrets.GITHUB_TOKEN }}
+          
       - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v2
         with:
@@ -215,12 +224,22 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
           
+      - name: Configure Deployment Source for Frontend
+        run: |
+          az webapp deployment source config \
+            --name ${{ env.AZURE_WEBAPP_NAME_WEB }} \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP_WEB }} \
+            --repo-url https://github.com/UPT-FAING-EPIS/examen-2025-ii-pds-u1-SebastianFuentesAvalos \
+            --branch main \
+            --git-token ${{ secrets.GITHUB_TOKEN }}
+            
       - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v2
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME_WEB }}
           resource-group-name: ${{ env.AZURE_RESOURCE_GROUP_WEB }}
           package: ./frontend-app
+          startup-command: 'npx serve -s . -l 8080'
 
   # ==================================================
   # JOB 5: BUILD SUMMARY
