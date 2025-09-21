@@ -18,6 +18,8 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  actions: read
+  security-events: write
 
 # Solo permitir una ejecución concurrente de despliegue
 concurrency:
@@ -1268,6 +1270,23 @@ jobs:
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
+        with:
+          enablement: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: Manual Pages Setup Instructions
+        if: failure()
+        run: |
+          echo "⚠️  GitHub Pages setup automático falló."
+          echo ""
+          echo "Por favor configura GitHub Pages manualmente:"
+          echo "1. Ve a Settings → Pages en tu repositorio"
+          echo "2. En 'Source', selecciona 'GitHub Actions'"
+          echo "3. Guarda los cambios"
+          echo "4. Re-ejecuta este workflow"
+          echo ""
+          echo "URL del repositorio: https://github.com/${{ github.repository }}/settings/pages"
 
       - name: Upload to GitHub Pages
         uses: actions/upload-pages-artifact@v3
@@ -1280,6 +1299,7 @@ jobs:
     permissions:
       pages: write
       id-token: write
+      contents: write
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
