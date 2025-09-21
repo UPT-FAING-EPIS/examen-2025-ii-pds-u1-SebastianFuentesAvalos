@@ -105,67 +105,89 @@ jobs:
           retention-days: 1
 
   # ==================================================
-  # JOB 3: BUILD SUMMARY
+  # JOB 3: DEPLOY BACKEND TO AZURE APP SERVICE
+  # ==================================================
+  Deploy-Backend:
+    needs: Build-Backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download backend artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-app
+          path: ./backend-app
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Deploy to Azure App Service
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME_API }}
+          package: ./backend-app
+      - name: Configure App Settings
+        uses: azure/appservice-settings@v1
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME_API }}
+          app-settings-json: |
+            [
+              {
+                "name": "ASPNETCORE_ENVIRONMENT",
+                "value": "Production"
+              },
+              {
+                "name": "ConnectionStrings__DefaultConnection", 
+                "value": "${{ secrets.SQL_CONNECTION_STRING }}"
+              },
+              {
+                "name": "JWT__Secret",
+                "value": "${{ secrets.JWT_SECRET }}"
+              }
+            ]
+
+  # ==================================================
+  # JOB 4: DEPLOY FRONTEND TO AZURE APP SERVICE
+  # ==================================================
+  Deploy-Frontend:
+    needs: Build-Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download frontend artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-app
+          path: ./frontend-app
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Deploy to Azure App Service
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME_WEB }}
+          package: ./frontend-app
+
+  # ==================================================
+  # JOB 5: BUILD SUMMARY
   # ==================================================
   Build-Summary:
-    needs: [Build-Backend, Build-Frontend]
+    needs: [Build-Backend, Build-Frontend, Deploy-Backend, Deploy-Frontend]
     runs-on: ubuntu-latest
-    
     steps:
-      - name: Build Summary
+      - name: Deployment Summary
         run: |
-          echo "## 🏗️ Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "## 🚀 Deployment Complete!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### ✅ Built Successfully" >> $GITHUB_STEP_SUMMARY
-          echo "- **Backend**: .NET 8 API compiled successfully" >> $GITHUB_STEP_SUMMARY
-          echo "- **Frontend**: Vue.js app built successfully" >> $GITHUB_STEP_SUMMARY
+          echo "### ✅ Deployed Services" >> $GITHUB_STEP_SUMMARY
+          echo "- **Backend API**: https://${{ env.AZURE_WEBAPP_NAME_API }}.azurewebsites.net" >> $GITHUB_STEP_SUMMARY
+          echo "- **Frontend Web**: https://${{ env.AZURE_WEBAPP_NAME_WEB }}.azurewebsites.net" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 🚀 Ready for Deployment" >> $GITHUB_STEP_SUMMARY
-          echo "- **Backend URL**: Ready for https://${{ env.AZURE_WEBAPP_NAME_API }}.azurewebsites.net" >> $GITHUB_STEP_SUMMARY
-          echo "- **Frontend URL**: Ready for https://${{ env.AZURE_WEBAPP_NAME_WEB }}.azurewebsites.net" >> $GITHUB_STEP_SUMMARY
+          echo "### � Tech Stack" >> $GITHUB_STEP_SUMMARY
+          echo "- **Backend**: .NET 8 Web API" >> $GITHUB_STEP_SUMMARY
+          echo "- **Frontend**: Vue.js 3 SPA" >> $GITHUB_STEP_SUMMARY
+          echo "- **Database**: Azure SQL Database" >> $GITHUB_STEP_SUMMARY
+          echo "- **Hosting**: Azure App Services" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 📝 Next Steps" >> $GITHUB_STEP_SUMMARY
-          echo "1. Configure Azure credentials in GitHub secrets" >> $GITHUB_STEP_SUMMARY
-          echo "2. Enable deployment jobs in workflow" >> $GITHUB_STEP_SUMMARY
-          echo "3. Set up database connection string" >> $GITHUB_STEP_SUMMARY
-
-  # ==================================================
-  # DEPLOYMENT JOBS (DISABLED - Enable after configuring secrets)
-  # ==================================================
-  # Deploy-Backend:
-  #   needs: Build-Backend
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Download backend artifact
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         name: backend-app
-  #         path: ./backend-app
-  #     - name: Login to Azure
-  #       uses: azure/login@v1
-  #       with:
-  #         creds: ${{ secrets.AZURE_CREDENTIALS }}
-  #     - name: Deploy to Azure App Service
-  #       uses: azure/webapps-deploy@v2
-  #       with:
-  #         app-name: ${{ env.AZURE_WEBAPP_NAME_API }}
-  #         package: ./backend-app
-
-  # Deploy-Frontend:
-  #   needs: Build-Frontend
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Download frontend artifact
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         name: frontend-app
-  #         path: ./frontend-app
-  #     - name: Login to Azure
-  #       uses: azure/login@v1
-  #       with:
-  #         creds: ${{ secrets.AZURE_CREDENTIALS }}
-  #     - name: Deploy to Azure App Service
-  #       uses: azure/webapps-deploy@v2
-  #       with:
-  #         app-name: ${{ env.AZURE_WEBAPP_NAME_WEB }}
-  #         package: ./frontend-app
+          echo "### 🎯 Test URLs" >> $GITHUB_STEP_SUMMARY
+          echo "- API Health: https://${{ env.AZURE_WEBAPP_NAME_API }}.azurewebsites.net/swagger" >> $GITHUB_STEP_SUMMARY
+          echo "- Frontend: https://${{ env.AZURE_WEBAPP_NAME_WEB }}.azurewebsites.net" >> $GITHUB_STEP_SUMMARY
