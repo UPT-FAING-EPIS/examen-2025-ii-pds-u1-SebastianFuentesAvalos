@@ -22,9 +22,9 @@ flowchart TD
 ```mermaid
 graph TB
     subgraph "Azure Subscription"
-        subgraph "Resource Group: upt-arg-988"
+        subgraph "Resource Group: upt-arg-900"
             subgraph "Brazil South Region"
-                SQL[("Azure SQL Server<br/>upt-dbs-988")]
+                SQL[("Azure SQL Server<br/>upt-dbs-900")]
                 DB[("SQL Database<br/>shorten")]
                 FW["Firewall Rule<br/>PublicAccess"]
                 
@@ -52,11 +52,11 @@ graph TB
 
 ## Componentes Desplegados
 
-### Resource Group: `upt-arg-988`
+### Resource Group: `upt-arg-900`
 - **Región:** Brazil South
 - **Propósito:** Contenedor de recursos
 
-### SQL Server: `upt-dbs-988`
+### SQL Server: `upt-dbs-900`
 - **Versión:** 12.0
 - **Autenticación:** SQL Server
 - **Firewall:** Acceso público (0.0.0.0-255.255.255.255)

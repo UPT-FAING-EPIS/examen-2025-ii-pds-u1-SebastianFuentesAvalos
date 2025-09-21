@@ -1,0 +1,187 @@
+name: Generación de Diagrama de Infraestructura
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'infra/**'
+      - '.github/workflows/infra_diagram.yml'
+  workflow_dispatch:
+
+jobs:
+  Generate-Infrastructure-Diagram:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 'stable'
+
+      - name: Get Terramaid version and architecture
+        id: vars
+        run: |
+            echo "terramaid_version=$(curl -s https://api.github.com/repos/RoseSecurity/Terramaid/releases/latest | grep tag_name | cut -d '"' -f 4)" >> $GITHUB_OUTPUT
+            case "${{ runner.arch }}" in
+            "X64" )
+                echo "arch=x86_64" >> $GITHUB_OUTPUT
+                ;;
+            "ARM64" )
+                echo "arch=arm64" >> $GITHUB_OUTPUT
+                ;;
+            esac
+
+      - name: Setup Terramaid
+        run: |
+            curl -L -o /tmp/terramaid.tar.gz "https://github.com/RoseSecurity/Terramaid/releases/download/${{ steps.vars.outputs.terramaid_version }}/Terramaid_Linux_${{ steps.vars.outputs.arch }}.tar.gz"
+            tar -xzvf /tmp/terramaid.tar.gz -C /tmp
+            mv -v /tmp/Terramaid /usr/local/bin/terramaid
+            chmod +x /usr/local/bin/terramaid
+      
+      - name: Generate Terramaid diagram
+        id: terramaid
+        run: |
+            cd infra
+            /usr/local/bin/terramaid run
+
+      - name: Setup Graphviz
+        uses: ts-graphviz/setup-graphviz@v2        
+
+      - name: Setup inframap
+        run: |
+            curl -L -o /tmp/inframap.tar.gz "https://github.com/cycloidio/inframap/releases/download/v0.7.0/inframap-linux-amd64.tar.gz"
+            tar -xzvf /tmp/inframap.tar.gz -C /tmp
+            mv -v /tmp/inframap-linux-amd64 /usr/local/bin/inframap
+            chmod +x /usr/local/bin/inframap
+            
+      - name: Generate inframap diagram
+        run: |
+            cd infra
+            /usr/local/bin/inframap generate main.tf --raw | dot -Tsvg > inframap_azure.svg
+            
+      - name: Upload inframap artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: inframap_azure.svg
+          path: infra/inframap_azure.svg
+
+      - name: Generate comprehensive infrastructure diagram
+        run: |
+          mkdir -p diagrams
+          
+          cat > diagrams/infrastructure-diagram.md << 'EOF'
+          # Diagrama de Infraestructura Azure - E-commerce
+
+          Este diagrama muestra la arquitectura de la infraestructura desplegada en Azure usando Terraform para la aplicación de e-commerce.
+
+          ## Diagrama Terramaid
+          EOF
+          
+          # Add Terramaid output if it exists
+          if [ -f "infra/Terramaid.md" ]; then
+              cat infra/Terramaid.md >> diagrams/infrastructure-diagram.md
+              echo "" >> diagrams/infrastructure-diagram.md
+          fi
+          
+          cat >> diagrams/infrastructure-diagram.md << 'EOF'
+
+          ## Diagrama de Arquitectura
+
+          ```mermaid
+          graph TB
+              subgraph "Azure Subscription"
+                  subgraph "Resource Group: upt-arg-900"
+                      subgraph "Brazil South Region"
+                          SQL[("Azure SQL Server<br/>upt-dbs-900")]
+                          DB[("SQL Database<br/>shorten")]
+                          FW["Firewall Rule<br/>PublicAccess"]
+                          
+                          SQL --> DB
+                          SQL --> FW
+                      end
+                  end
+              end
+              
+              subgraph "GitHub Actions"
+                  WF_INFRA["Infrastructure<br/>Deployment"]
+                  WF_DIAGRAM["Infrastructure<br/>Diagram Generation"]
+                  WF_CLASS["Class Diagram<br/>Generation"]
+              end
+              
+              subgraph "Future Application Layer"
+                  FRONTEND["Vue.js Frontend<br/>(E-commerce UI)"]
+                  BACKEND["Backend API<br/>(Product/Order Management)"]
+              end
+              
+              WF_INFRA --> FW
+              WF_DIAGRAM -.-> FW
+              FW --> SQL
+              BACKEND --> SQL
+              FRONTEND --> BACKEND
+              
+              style SQL fill:#e1f5fe
+              style DB fill:#f3e5f5
+              style FW fill:#fff3e0
+              style WF_INFRA fill:#e8f5e8
+              style WF_DIAGRAM fill:#f3e5f5
+              style WF_CLASS fill:#fff3e0
+              style FRONTEND fill:#e3f2fd,stroke-dasharray: 5 5
+              style BACKEND fill:#f1f8e9,stroke-dasharray: 5 5
+          ```
+
+          ## Componentes Desplegados
+
+          ### Resource Group: `upt-arg-900`
+          - **Región:** Brazil South
+          - **Propósito:** Contenedor de recursos para la aplicación de e-commerce
+
+          ### SQL Server: `upt-dbs-900`
+          - **Versión:** 12.0
+          - **Autenticación:** SQL Server
+          - **Firewall:** Acceso público (0.0.0.0-255.255.255.255)
+          - **Propósito:** Base de datos para productos, usuarios, pedidos
+
+          ### Database: `shorten`
+          - **SKU:** Basic
+          - **Propósito:** Almacenar datos del e-commerce (productos, usuarios, carritos, pedidos)
+
+          ## Flujo de Datos del E-commerce
+
+          1. **Frontend (Vue.js)**: Interfaz de usuario para navegar productos y realizar compras
+          2. **Backend API**: Procesamiento de lógica de negocio y operaciones CRUD
+          3. **Azure SQL Database**: Persistencia de datos de productos, usuarios y pedidos
+          4. **GitHub Actions**: Automatización de despliegue y generación de documentación
+
+          ## Estado de la Infraestructura
+
+          ✅ **Infraestructura desplegada exitosamente**
+
+          ### Próximos Pasos
+          1. 🔄 Desarrollar API backend para e-commerce
+          2. 🎨 Crear interfaz Vue.js para catálogo y carrito
+          3. 📊 Implementar sistema de gestión de pedidos
+          4. 🔒 Configurar autenticación y autorización
+
+          ---
+          *Generado automáticamente el $(date)*
+          EOF
+
+      - name: Commit and push infrastructure diagram
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action - Infrastructure Diagram"
+          git add diagrams/infrastructure-diagram.md
+          git commit -m "Auto-generate infrastructure diagram [skip ci]" || echo "No changes to commit"
+          git push || echo "Nothing to push"
+
+      - name: Publish diagram summary
+        run: |
+            echo "## 📊 Infrastructure Diagram Generated" >> $GITHUB_STEP_SUMMARY
+            echo "El diagrama de infraestructura ha sido actualizado en \`diagrams/infrastructure-diagram.md\`" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Componentes incluidos:" >> $GITHUB_STEP_SUMMARY
+            echo "- ✅ Terramaid diagram (dependencias Terraform)" >> $GITHUB_STEP_SUMMARY
+            echo "- ✅ Architecture diagram (Mermaid)" >> $GITHUB_STEP_SUMMARY
+            echo "- ✅ Inframap SVG (subido como artifact)" >> $GITHUB_STEP_SUMMARY
+            echo "- ✅ Documentación detallada" >> $GITHUB_STEP_SUMMARY
