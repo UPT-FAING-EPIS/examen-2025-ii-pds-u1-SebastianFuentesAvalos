@@ -37,15 +37,17 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Clean previous builds
+      - name: Clear NuGet cache and clean builds
         run: |
+          dotnet nuget locals all --clear
           cd backend/EcommerceApi
-          dotnet clean
+          rm -rf bin obj
+          dotnet clean || true
 
       - name: Restore dependencies
         run: |
           cd backend/EcommerceApi
-          dotnet restore
+          dotnet restore --no-cache --force
 
       - name: Build application
         run: |
