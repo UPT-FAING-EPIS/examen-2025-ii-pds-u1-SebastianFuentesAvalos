@@ -1,0 +1,106 @@
+{
+  "format": 1,
+  "restore": {
+    "D:\\UPT_CICLOS\\CICLO VIII\\Patrones\\Examenes de Unidad\\U1\\examen-2025-ii-pds-u1-SebastianFuentesAvalos\\backend\\EcommerceApi\\EcommerceApi.csproj": {}
+  },
+  "projects": {
+    "D:\\UPT_CICLOS\\CICLO VIII\\Patrones\\Examenes de Unidad\\U1\\examen-2025-ii-pds-u1-SebastianFuentesAvalos\\backend\\EcommerceApi\\EcommerceApi.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "D:\\UPT_CICLOS\\CICLO VIII\\Patrones\\Examenes de Unidad\\U1\\examen-2025-ii-pds-u1-SebastianFuentesAvalos\\backend\\EcommerceApi\\EcommerceApi.csproj",
+        "projectName": "EcommerceApi",
+        "projectPath": "D:\\UPT_CICLOS\\CICLO VIII\\Patrones\\Examenes de Unidad\\U1\\examen-2025-ii-pds-u1-SebastianFuentesAvalos\\backend\\EcommerceApi\\EcommerceApi.csproj",
+        "packagesPath": "C:\\Users\\Equipo\\.nuget\\packages\\",
+        "outputPath": "D:\\UPT_CICLOS\\CICLO VIII\\Patrones\\Examenes de Unidad\\U1\\examen-2025-ii-pds-u1-SebastianFuentesAvalos\\backend\\EcommerceApi\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\Equipo\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.200"
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "dependencies": {
+            "BCrypt.Net-Next": {
+              "target": "Package",
+              "version": "[4.0.3, )"
+            },
+            "Microsoft.EntityFrameworkCore.Design": {
+              "target": "Package",
+              "version": "[8.0.8, )"
+            },
+            "Microsoft.EntityFrameworkCore.SqlServer": {
+              "target": "Package",
+              "version": "[8.0.8, )"
+            },
+            "Swashbuckle.AspNetCore": {
+              "target": "Package",
+              "version": "[6.5.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[8.0.15, 8.0.15]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Host.win-x64",
+              "version": "[8.0.15, 8.0.15]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[8.0.15, 8.0.15]"
+            },
+            {
+              "name": "Microsoft.WindowsDesktop.App.Ref",
+              "version": "[8.0.15, 8.0.15]"
+            }
+          ],
+          "frameworkReferences": {
+            "Microsoft.AspNetCore.App": {
+              "privateAssets": "none"
+            },
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.203/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

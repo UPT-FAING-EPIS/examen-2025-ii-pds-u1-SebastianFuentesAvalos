@@ -1,73 +1,102 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace EcommerceApi.Models;
 
+[Table("productos")]
 public class Product
 {
+    [Key]
+    [Column("id")]
     public int Id { get; set; }
+    
+    [Required]
+    [Column("nombre")]
+    [MaxLength(200)]
     public string Name { get; set; } = string.Empty;
+    
+    [Column("descripcion")]
     public string Description { get; set; } = string.Empty;
+    
+    [Required]
+    [Column("precio", TypeName = "decimal(10,2)")]
     public decimal Price { get; set; }
+    
+    [Required]
+    [Column("stock")]
     public int Stock { get; set; }
+    
+    [Required]
+    [Column("categoria_id")]
     public int CategoryId { get; set; }
+    
+    [Column("imagen_url")]
+    [MaxLength(500)]
     public string ImageUrl { get; set; } = string.Empty;
+    
+    [Column("disponible")]
     public bool Available { get; set; } = true;
+    
+    [Column("fecha_creacion")]
     public DateTime CreatedDate { get; set; } = DateTime.Now;
 }
 
-public class Category
-{
-    public int Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
-    public bool Active { get; set; } = true;
-}
-
+[Table("usuarios")]
 public class User
 {
+    [Key]
+    [Column("id")]
     public int Id { get; set; }
+    
+    [Required]
+    [Column("nombre")]
+    [MaxLength(100)]
     public string Name { get; set; } = string.Empty;
+    
+    [Required]
+    [Column("email")]
+    [MaxLength(150)]
     public string Email { get; set; } = string.Empty;
+    
+    [Required]
+    [Column("password_hash")]
+    [MaxLength(255)]
     public string PasswordHash { get; set; } = string.Empty;
-    public string Phone { get; set; } = string.Empty;
-    public string Address { get; set; } = string.Empty;
-    public DateTime RegisterDate { get; set; } = DateTime.Now;
+    
+    [Column("telefono")]
+    [MaxLength(20)]
+    public string? Phone { get; set; }
+    
+    [Column("direccion")]
+    [MaxLength(500)]
+    public string? Address { get; set; }
+    
+    [Column("fecha_registro")]
+    public DateTime CreatedDate { get; set; } = DateTime.Now;
+    
+    [Column("activo")]
     public bool Active { get; set; } = true;
 }
 
-public class Cart
+// DTOs para registro y login
+public class RegisterDto
 {
-    public int Id { get; set; }
-    public int UserId { get; set; }
-    public List<CartItem> Items { get; set; } = new();
-    public DateTime CreatedDate { get; set; } = DateTime.Now;
+    public string Name { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
+    public string ConfirmPassword { get; set; } = string.Empty;
+    public int CaptchaAnswer { get; set; }
 }
 
-public class CartItem
+public class LoginDto
 {
-    public int Id { get; set; }
-    public int CartId { get; set; }
-    public int ProductId { get; set; }
-    public int Quantity { get; set; }
-    public decimal UnitPrice { get; set; }
+    public string Email { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
+    public int CaptchaAnswer { get; set; }
 }
 
-public class Order
+public class CaptchaDto
 {
-    public int Id { get; set; }
-    public int UserId { get; set; }
-    public decimal Total { get; set; }
-    public string Status { get; set; } = "Pending";
-    public string ShippingAddress { get; set; } = string.Empty;
-    public string PaymentMethod { get; set; } = string.Empty;
-    public DateTime OrderDate { get; set; } = DateTime.Now;
-    public List<OrderDetail> Details { get; set; } = new();
-}
-
-public class OrderDetail
-{
-    public int Id { get; set; }
-    public int OrderId { get; set; }
-    public int ProductId { get; set; }
-    public int Quantity { get; set; }
-    public decimal UnitPrice { get; set; }
-    public decimal Subtotal => Quantity * UnitPrice;
+    public string Question { get; set; } = string.Empty;
+    public int CorrectAnswer { get; set; }
 }

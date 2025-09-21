@@ -21,7 +21,7 @@ public class AuthController : ControllerBase
 
         user.Id = Users.Count + 1;
         user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(user.PasswordHash); // En producción usar hash real
-        user.RegisterDate = DateTime.Now;
+        user.CreatedDate = DateTime.Now;
         
         Users.Add(user);
         
