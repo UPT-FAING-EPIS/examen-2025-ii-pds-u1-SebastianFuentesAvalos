@@ -48,12 +48,30 @@ const filteredProducts = computed(() => {
 })
 
 const loadProducts = async () => {
-  // En producción esto vendría de la API
-  products.value = [
-    { id: 1, name: 'Smartphone Samsung', description: 'Teléfono inteligente', price: 699.99, stock: 50, categoryId: 1, imageUrl: 'https://via.placeholder.com/300', available: true },
-    { id: 2, name: 'Laptop HP', description: 'Laptop para profesionales', price: 1299.99, stock: 25, categoryId: 1, imageUrl: 'https://via.placeholder.com/300', available: true },
-    { id: 3, name: 'Camiseta Nike', description: 'Camiseta deportiva', price: 29.99, stock: 200, categoryId: 2, imageUrl: 'https://via.placeholder.com/300', available: true }
-  ]
+  try {
+    // Conectar con la API real del backend
+    const response = await fetch('https://sebastian-ecommerce-api-cneebwapd4becrgf.eastus-01.azurewebsites.net/api/Products')
+    if (response.ok) {
+      const apiProducts = await response.json()
+      products.value = apiProducts
+    } else {
+      console.error('Error loading products from API, using fallback data')
+      // Fallback data con imágenes que funcionan
+      products.value = [
+        { id: 1, name: 'Smartphone Samsung', description: 'Teléfono inteligente', price: 699.99, stock: 50, categoryId: 1, imageUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPjMwMHgzMDA8L3RleHQ+PC9zdmc+', available: true },
+        { id: 2, name: 'Laptop HP', description: 'Laptop para profesionales', price: 1299.99, stock: 25, categoryId: 1, imageUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPjMwMHgzMDA8L3RleHQ+PC9zdmc+', available: true },
+        { id: 3, name: 'Camiseta Nike', description: 'Camiseta deportiva', price: 29.99, stock: 200, categoryId: 2, imageUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPjMwMHgzMDA8L3RleHQ+PC9zdmc+', available: true }
+      ]
+    }
+  } catch (error) {
+    console.error('Error fetching products:', error)
+    // Fallback data con imágenes que funcionan
+    products.value = [
+      { id: 1, name: 'Smartphone Samsung', description: 'Teléfono inteligente', price: 699.99, stock: 50, categoryId: 1, imageUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPjMwMHgzMDA8L3RleHQ+PC9zdmc+', available: true },
+      { id: 2, name: 'Laptop HP', description: 'Laptop para profesionales', price: 1299.99, stock: 25, categoryId: 1, imageUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPjMwMHgzMDA8L3RleHQ+PC9zdmc+', available: true },
+      { id: 3, name: 'Camiseta Nike', description: 'Camiseta deportiva', price: 29.99, stock: 200, categoryId: 2, imageUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPjMwMHgzMDA8L3RleHQ+PC9zdmc+', available: true }
+    ]
+  }
 }
 
 const addToCart = (product: Product) => {
