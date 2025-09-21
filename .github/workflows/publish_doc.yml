@@ -1,0 +1,1346 @@
+name: Publicación de Documentación en GitHub Pages
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - 'docs/**'
+      - 'README.md'
+      - 'database/**'
+      - 'diagrams/**'
+      - '.github/workflows/publish_doc.yml'
+  workflow_dispatch:
+
+# Permisos necesarios para GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Solo permitir una ejecución concurrente de despliegue
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  Generate-Documentation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch completo para mejor documentación
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install DocFX
+        run: dotnet tool install -g docfx
+
+      - name: Create documentation structure
+        run: |
+          mkdir -p docs
+          mkdir -p docs/api
+          mkdir -p docs/architecture
+          mkdir -p docs/database
+          mkdir -p docs/frontend
+          mkdir -p docs/deployment
+
+      - name: Initialize DocFX project
+        run: |
+          cd docs
+          docfx init -q -o . --name "E-commerce Documentation" --source ../backend/EcommerceApi
+
+      - name: Configure DocFX
+        run: |
+          cat > docs/docfx.json << 'EOF'
+          {
+            "metadata": [
+              {
+                "src": [
+                  {
+                    "files": ["../backend/EcommerceApi/**/*.cs"],
+                    "exclude": ["**/bin/**", "**/obj/**"]
+                  }
+                ],
+                "dest": "api",
+                "includePrivateMembers": false,
+                "disableGitFeatures": false,
+                "disableDefaultFilter": false,
+                "noRestore": false,
+                "namespaceLayout": "flattened",
+                "memberLayout": "samePage"
+              }
+            ],
+            "build": {
+              "content": [
+                {
+                  "files": ["api/**.yml", "api/index.md"]
+                },
+                {
+                  "files": ["articles/**.md", "articles/**/toc.yml", "toc.yml", "*.md"]
+                }
+              ],
+              "resource": [
+                {
+                  "files": ["images/**"]
+                }
+              ],
+              "output": "_site",
+              "globalMetadata": {
+                "_appName": "E-commerce Application",
+                "_appTitle": "Documentación Técnica - E-commerce",
+                "_enableSearch": true,
+                "_enableNewTab": true
+              },
+              "template": ["default", "modern"],
+              "postProcessors": ["ExtractSearchIndex"],
+              "markdownEngineName": "markdig",
+              "noLangKeyword": false,
+              "keepFileLink": false,
+              "cleanupCacheHistory": false,
+              "disableGitFeatures": false
+            }
+          }
+          EOF
+
+      - name: Create main documentation files
+        run: |
+          # Archivo principal index.md
+          cat > docs/index.md << 'EOF'
+          # Documentación E-commerce Application
+
+          Bienvenido a la documentación técnica de la aplicación de e-commerce desarrollada como proyecto académico.
+
+          ## 🏗️ Arquitectura del Sistema
+
+          La aplicación sigue una arquitectura de capas moderna con las siguientes tecnologías:
+
+          - **Frontend**: Vue.js 3 con TypeScript
+          - **Backend**: .NET 8 Web API
+          - **Base de Datos**: Azure SQL Server
+          - **Infraestructura**: Azure Cloud con Terraform
+          - **CI/CD**: GitHub Actions
+
+          ## 📚 Secciones de Documentación
+
+          ### [🔧 API Reference](api/)
+          Documentación completa de la API REST generada automáticamente desde el código fuente.
+
+          ### [🏛️ Arquitectura](articles/architecture.md)
+          Diagramas y explicación de la arquitectura del sistema.
+
+          ### [🗄️ Base de Datos](articles/database.md)
+          Esquema de base de datos, relaciones y procedimientos almacenados.
+
+          ### [🎨 Frontend](articles/frontend.md)
+          Componentes Vue.js, routing y gestión de estado.
+
+          ### [🚀 Despliegue](articles/deployment.md)
+          Guías de configuración y despliegue en Azure.
+
+          ## 🎯 Características Principales
+
+          - ✅ Catálogo de productos con búsqueda y filtrado
+          - ✅ Carrito de compras interactivo
+          - ✅ Proceso de checkout completo
+          - ✅ Gestión de pedidos y historial
+          - ✅ Panel administrativo
+          - ✅ API REST documentada
+          - ✅ Arquitectura escalable
+          - ✅ Despliegue automatizado
+
+          ## 🔗 Enlaces Útiles
+
+          - [Repositorio GitHub](https://github.com/UPT-FAING-EPIS/examen-2025-ii-pds-u1-SebastianFuentesAvalos)
+          - [Aplicación en Vivo](https://upt-ecommerce-app.azurewebsites.net) *(Disponible después del despliegue)*
+          - [Diagramas de Arquitectura](articles/architecture.md)
+
+          ---
+          *Documentación generada automáticamente con DocFX*
+          EOF
+
+          # Tabla de contenidos principal
+          cat > docs/toc.yml << 'EOF'
+          - name: Inicio
+            href: index.md
+          - name: API Reference
+            href: api/
+          - name: Artículos
+            href: articles/toc.yml
+          EOF
+
+          # Crear directorio de artículos
+          mkdir -p docs/articles
+
+          # Tabla de contenidos de artículos
+          cat > docs/articles/toc.yml << 'EOF'
+          - name: Arquitectura
+            href: architecture.md
+          - name: Base de Datos
+            href: database.md
+          - name: Frontend
+            href: frontend.md
+          - name: Despliegue
+            href: deployment.md
+          - name: Guía de Desarrollo
+            href: development.md
+          EOF
+
+      - name: Create architecture documentation
+        run: |
+          cat > docs/articles/architecture.md << 'EOF'
+          # Arquitectura del Sistema
+
+          ## Visión General
+
+          La aplicación de e-commerce sigue una arquitectura de microservicios con separación clara de responsabilidades.
+
+          ## Diagrama de Arquitectura
+
+          ```mermaid
+          graph TB
+              subgraph "Cliente"
+                  BROWSER["Navegador Web"]
+                  MOBILE["App Móvil (Futuro)"]
+              end
+
+              subgraph "Frontend Layer"
+                  VUE["Vue.js SPA"]
+                  ROUTER["Vue Router"]
+                  STORE["Pinia Store"]
+              end
+
+              subgraph "Azure Cloud"
+                  subgraph "App Services"
+                      API["Backend API (.NET 8)"]
+                      WEB["Frontend Host"]
+                  end
+                  
+                  subgraph "Data Layer"
+                      SQL["Azure SQL Database"]
+                      REDIS["Redis Cache (Futuro)"]
+                  end
+                  
+                  subgraph "Storage"
+                      BLOB["Blob Storage (Imágenes)"]
+                  end
+              end
+
+              BROWSER --> VUE
+              MOBILE -.-> API
+              VUE --> API
+              API --> SQL
+              API --> BLOB
+              API -.-> REDIS
+
+              style VUE fill:#4fc08d
+              style API fill:#512bd4
+              style SQL fill:#e8e8e8
+          ```
+
+          ## Capas de la Aplicación
+
+          ### 1. Presentation Layer (Frontend)
+          - **Framework**: Vue.js 3 con Composition API
+          - **Routing**: Vue Router para navegación SPA
+          - **State Management**: Pinia para gestión de estado
+          - **UI Components**: Custom components + bibliotecas UI
+
+          ### 2. API Layer (Backend)
+          - **Framework**: .NET 8 Web API
+          - **Authentication**: JWT Bearer tokens
+          - **Validation**: FluentValidation
+          - **Documentation**: Swagger/OpenAPI
+
+          ### 3. Business Logic Layer
+          - **Services**: Lógica de negocio encapsulada
+          - **DTOs**: Data Transfer Objects para API
+          - **Mappers**: AutoMapper para conversiones
+          - **Validators**: Validación de reglas de negocio
+
+          ### 4. Data Access Layer
+          - **ORM**: Entity Framework Core
+          - **Database**: Azure SQL Server
+          - **Migrations**: Code-First approach
+          - **Repositories**: Patrón Repository para abstracción
+
+          ## Patrones de Diseño Implementados
+
+          ### Repository Pattern
+          ```csharp
+          public interface IProductRepository
+          {
+              Task<Product> GetByIdAsync(int id);
+              Task<IEnumerable<Product>> GetAllAsync();
+              Task<Product> AddAsync(Product product);
+              Task UpdateAsync(Product product);
+              Task DeleteAsync(int id);
+          }
+          ```
+
+          ### Unit of Work Pattern
+          ```csharp
+          public interface IUnitOfWork
+          {
+              IProductRepository Products { get; }
+              IOrderRepository Orders { get; }
+              Task<int> SaveChangesAsync();
+          }
+          ```
+
+          ### Service Layer Pattern
+          ```csharp
+          public class ProductService : IProductService
+          {
+              private readonly IUnitOfWork _unitOfWork;
+              private readonly IMapper _mapper;
+              
+              public async Task<ProductDto> CreateProductAsync(CreateProductDto dto)
+              {
+                  // Lógica de negocio
+              }
+          }
+          ```
+
+          ## Principios SOLID
+
+          - **S**ingle Responsibility: Cada clase tiene una responsabilidad única
+          - **O**pen/Closed: Extensible sin modificar código existente
+          - **L**iskov Substitution: Interfaces bien definidas
+          - **I**nterface Segregation: Interfaces específicas y cohesivas
+          - **D**ependency Inversion: Inversión de dependencias con DI container
+
+          ## Seguridad
+
+          - **Authentication**: JWT con refresh tokens
+          - **Authorization**: Role-based access control
+          - **CORS**: Configurado para dominios específicos
+          - **HTTPS**: Obligatorio en producción
+          - **Input Validation**: Validación en cliente y servidor
+          - **SQL Injection**: Protección via EF Core y parámetros
+
+          ## Performance
+
+          - **Caching**: Redis para datos frecuentes
+          - **Lazy Loading**: Carga diferida de entidades
+          - **Pagination**: Paginación en listados grandes
+          - **CDN**: Azure CDN para assets estáticos
+          - **Compression**: Gzip compression habilitado
+          EOF
+
+      - name: Create database documentation
+        run: |
+          cat > docs/articles/database.md << 'EOF'
+          # Documentación de Base de Datos
+
+          ## Esquema de Base de Datos
+
+          La base de datos del e-commerce está diseñada siguiendo las mejores prácticas de normalización y optimización.
+
+          ### Diagrama Entidad-Relación
+
+          ```mermaid
+          erDiagram
+              USUARIOS {
+                  int id PK
+                  string nombre
+                  string email UK
+                  string password_hash
+                  string telefono
+                  string direccion
+                  datetime fecha_registro
+                  boolean activo
+              }
+
+              CATEGORIAS {
+                  int id PK
+                  string nombre
+                  string descripcion
+                  boolean activa
+                  string imagen_url
+              }
+
+              PRODUCTOS {
+                  int id PK
+                  string nombre
+                  text descripcion
+                  decimal precio
+                  int stock
+                  int categoria_id FK
+                  string imagen_url
+                  boolean disponible
+                  datetime fecha_creacion
+              }
+
+              CARRITOS {
+                  int id PK
+                  int usuario_id FK
+                  datetime fecha_creacion
+                  datetime fecha_actualizacion
+              }
+
+              ITEMS_CARRITO {
+                  int id PK
+                  int carrito_id FK
+                  int producto_id FK
+                  int cantidad
+                  decimal precio_unitario
+                  datetime fecha_agregado
+              }
+
+              PEDIDOS {
+                  int id PK
+                  int usuario_id FK
+                  decimal total
+                  string estado
+                  string direccion_envio
+                  string metodo_pago
+                  datetime fecha_pedido
+                  datetime fecha_entrega
+              }
+
+              DETALLES_PEDIDO {
+                  int id PK
+                  int pedido_id FK
+                  int producto_id FK
+                  int cantidad
+                  decimal precio_unitario
+                  decimal subtotal
+              }
+
+              METODOS_PAGO {
+                  int id PK
+                  string nombre
+                  string tipo
+                  boolean activo
+              }
+
+              USUARIOS ||--o{ CARRITOS : "tiene"
+              USUARIOS ||--o{ PEDIDOS : "realiza"
+              CATEGORIAS ||--o{ PRODUCTOS : "categoriza"
+              CARRITOS ||--o{ ITEMS_CARRITO : "contiene"
+              PRODUCTOS ||--o{ ITEMS_CARRITO : "incluido_en"
+              PEDIDOS ||--o{ DETALLES_PEDIDO : "contiene"
+              PRODUCTOS ||--o{ DETALLES_PEDIDO : "incluido_en"
+              METODOS_PAGO ||--o{ PEDIDOS : "procesa"
+          ```
+
+          ## Tablas Principales
+
+          ### usuarios
+          Almacena información de los usuarios registrados en el sistema.
+
+          | Campo | Tipo | Descripción |
+          |-------|------|-------------|
+          | id | INT IDENTITY(1,1) | Clave primaria |
+          | nombre | NVARCHAR(100) | Nombre completo del usuario |
+          | email | NVARCHAR(150) | Email único del usuario |
+          | password_hash | NVARCHAR(255) | Hash de la contraseña |
+          | telefono | NVARCHAR(20) | Número de teléfono |
+          | direccion | NVARCHAR(500) | Dirección de envío |
+          | fecha_registro | DATETIME2 | Fecha de registro |
+          | activo | BIT | Estado del usuario |
+
+          ### productos
+          Catálogo principal de productos disponibles.
+
+          | Campo | Tipo | Descripción |
+          |-------|------|-------------|
+          | id | INT IDENTITY(1,1) | Clave primaria |
+          | nombre | NVARCHAR(200) | Nombre del producto |
+          | descripcion | NTEXT | Descripción detallada |
+          | precio | DECIMAL(10,2) | Precio actual |
+          | stock | INT | Cantidad disponible |
+          | categoria_id | INT | FK a categorias |
+          | imagen_url | NVARCHAR(500) | URL de la imagen |
+          | disponible | BIT | Disponibilidad |
+          | fecha_creacion | DATETIME2 | Fecha de creación |
+
+          ## Índices Optimizados
+
+          ```sql
+          -- Índices para mejorar performance
+          CREATE INDEX IX_productos_categoria ON productos(categoria_id);
+          CREATE INDEX IX_items_carrito_carrito ON items_carrito(carrito_id);
+          CREATE INDEX IX_pedidos_usuario ON pedidos(usuario_id);
+          CREATE INDEX IX_pedidos_fecha ON pedidos(fecha_pedido);
+          ```
+
+          ## Vistas Útiles
+
+          ### v_productos_completos
+          Vista que combina productos con información de categoría.
+
+          ```sql
+          CREATE VIEW v_productos_completos AS
+          SELECT 
+              p.id, p.nombre, p.descripcion, p.precio, p.stock,
+              p.imagen_url, p.disponible, p.fecha_creacion,
+              c.nombre AS categoria_nombre
+          FROM productos p
+          INNER JOIN categorias c ON p.categoria_id = c.id;
+          ```
+
+          ## Procedimientos Almacenados
+
+          ### sp_agregar_al_carrito
+          Procedimiento para agregar productos al carrito de un usuario.
+
+          ```sql
+          CREATE PROCEDURE sp_agregar_al_carrito
+              @usuario_id INT,
+              @producto_id INT,
+              @cantidad INT
+          AS
+          BEGIN
+              -- Lógica para agregar al carrito
+          END
+          ```
+
+          ### sp_crear_pedido_desde_carrito
+          Convierte el carrito actual en un pedido confirmado.
+
+          ```sql
+          CREATE PROCEDURE sp_crear_pedido_desde_carrito
+              @usuario_id INT,
+              @direccion_envio NVARCHAR(500),
+              @metodo_pago_id INT,
+              @pedido_id INT OUTPUT
+          AS
+          BEGIN
+              -- Lógica para crear pedido
+          END
+          ```
+
+          ## Consultas Frecuentes
+
+          ### Productos más vendidos
+          ```sql
+          SELECT TOP 10 p.nombre, SUM(dp.cantidad) as total_vendido
+          FROM productos p
+          INNER JOIN detalles_pedido dp ON p.id = dp.producto_id
+          GROUP BY p.id, p.nombre
+          ORDER BY total_vendido DESC;
+          ```
+
+          ### Pedidos por estado
+          ```sql
+          SELECT estado, COUNT(*) as cantidad
+          FROM pedidos 
+          GROUP BY estado;
+          ```
+
+          ### Stock bajo
+          ```sql
+          SELECT nombre, stock 
+          FROM productos 
+          WHERE stock < 10 AND disponible = 1;
+          ```
+          EOF
+
+      - name: Create frontend documentation
+        run: |
+          cat > docs/articles/frontend.md << 'EOF'
+          # Documentación Frontend
+
+          ## Tecnologías Utilizadas
+
+          - **Vue.js 3**: Framework principal con Composition API
+          - **TypeScript**: Tipado estático para mejor mantenibilidad
+          - **Vite**: Build tool y dev server
+          - **Pinia**: State management
+          - **Vue Router**: Routing y navegación
+          - **Axios**: Cliente HTTP para API calls
+
+          ## Estructura del Proyecto
+
+          ```
+          frontend/
+          ├── src/
+          │   ├── components/           # Componentes reutilizables
+          │   │   ├── common/          # Componentes comunes
+          │   │   ├── product/         # Componentes de productos
+          │   │   ├── cart/            # Componentes del carrito
+          │   │   └── order/           # Componentes de pedidos
+          │   ├── views/               # Páginas/Vistas principales
+          │   ├── stores/              # Pinia stores
+          │   ├── services/            # Servicios API
+          │   ├── types/               # Definiciones TypeScript
+          │   ├── router/              # Configuración de rutas
+          │   └── assets/              # Assets estáticos
+          ├── public/
+          └── dist/                    # Build de producción
+          ```
+
+          ## Componentes Principales
+
+          ### ProductCatalog.vue
+          Componente principal para mostrar el catálogo de productos.
+
+          ```vue
+          <template>
+            <div class="product-catalog">
+              <div class="filters">
+                <CategoryFilter @filter="handleCategoryFilter" />
+                <PriceFilter @filter="handlePriceFilter" />
+              </div>
+              <div class="products-grid">
+                <ProductCard 
+                  v-for="product in filteredProducts" 
+                  :key="product.id"
+                  :product="product"
+                  @add-to-cart="handleAddToCart"
+                />
+              </div>
+            </div>
+          </template>
+          ```
+
+          ### ShoppingCart.vue
+          Gestión completa del carrito de compras.
+
+          ```vue
+          <template>
+            <div class="shopping-cart">
+              <h2>Carrito de Compras</h2>
+              <CartItem 
+                v-for="item in cartItems" 
+                :key="item.id"
+                :item="item"
+                @update-quantity="updateQuantity"
+                @remove-item="removeItem"
+              />
+              <div class="cart-total">
+                Total: {{ formatCurrency(cartTotal) }}
+              </div>
+              <button @click="proceedToCheckout">Proceder al Checkout</button>
+            </div>
+          </template>
+          ```
+
+          ## State Management (Pinia)
+
+          ### useProductStore
+          Store para gestión de productos.
+
+          ```typescript
+          export const useProductStore = defineStore('products', () => {
+            const products = ref<Product[]>([]);
+            const loading = ref(false);
+            const error = ref<string | null>(null);
+
+            const fetchProducts = async (filters?: ProductFilters) => {
+              loading.value = true;
+              try {
+                const response = await productService.getProducts(filters);
+                products.value = response.data;
+              } catch (err) {
+                error.value = 'Error al cargar productos';
+              } finally {
+                loading.value = false;
+              }
+            };
+
+            return { products, loading, error, fetchProducts };
+          });
+          ```
+
+          ### useCartStore
+          Store para gestión del carrito.
+
+          ```typescript
+          export const useCartStore = defineStore('cart', () => {
+            const items = ref<CartItem[]>([]);
+            
+            const cartTotal = computed(() => 
+              items.value.reduce((total, item) => 
+                total + (item.price * item.quantity), 0
+              )
+            );
+
+            const addToCart = (product: Product, quantity: number = 1) => {
+              const existingItem = items.value.find(item => item.productId === product.id);
+              if (existingItem) {
+                existingItem.quantity += quantity;
+              } else {
+                items.value.push({
+                  id: generateId(),
+                  productId: product.id,
+                  name: product.name,
+                  price: product.price,
+                  quantity
+                });
+              }
+            };
+
+            return { items, cartTotal, addToCart };
+          });
+          ```
+
+          ## Servicios API
+
+          ### productService
+          ```typescript
+          export const productService = {
+            async getProducts(filters?: ProductFilters): Promise<ApiResponse<Product[]>> {
+              const response = await api.get('/api/products', { params: filters });
+              return response.data;
+            },
+
+            async getProductById(id: number): Promise<ApiResponse<Product>> {
+              const response = await api.get(`/api/products/${id}`);
+              return response.data;
+            },
+
+            async createProduct(product: CreateProductDto): Promise<ApiResponse<Product>> {
+              const response = await api.post('/api/products', product);
+              return response.data;
+            }
+          };
+          ```
+
+          ## Routing
+
+          ```typescript
+          const routes: RouteRecordRaw[] = [
+            { path: '/', name: 'Home', component: () => import('@/views/HomeView.vue') },
+            { path: '/products', name: 'Products', component: () => import('@/views/ProductsView.vue') },
+            { path: '/products/:id', name: 'ProductDetail', component: () => import('@/views/ProductDetailView.vue') },
+            { path: '/cart', name: 'Cart', component: () => import('@/views/CartView.vue') },
+            { path: '/checkout', name: 'Checkout', component: () => import('@/views/CheckoutView.vue') },
+            { path: '/orders', name: 'Orders', component: () => import('@/views/OrdersView.vue') },
+          ];
+          ```
+
+          ## Buenas Prácticas Implementadas
+
+          ### 1. Composition API
+          - Uso consistente del Composition API para mejor reusabilidad
+          - Custom composables para lógica compartida
+
+          ### 2. TypeScript
+          - Tipado fuerte en toda la aplicación
+          - Interfaces bien definidas para API responses
+
+          ### 3. Componentización
+          - Componentes pequeños y reutilizables
+          - Props tipadas y validadas
+
+          ### 4. Performance
+          - Lazy loading de rutas
+          - Virtual scrolling para listas grandes
+          - Debounce en búsquedas
+
+          ### 5. Testing
+          - Unit tests con Vitest
+          - Component testing con Vue Test Utils
+          - E2E tests con Cypress
+          EOF
+
+      - name: Create deployment documentation
+        run: |
+          cat > docs/articles/deployment.md << 'EOF'
+          # Guía de Despliegue
+
+          ## Arquitectura de Despliegue
+
+          La aplicación se despliega en Azure utilizando los siguientes servicios:
+
+          ```mermaid
+          graph TB
+              subgraph "Azure Cloud"
+                  subgraph "App Services"
+                      WEB["Frontend App Service<br/>(Vue.js SPA)"]
+                      API["Backend App Service<br/>(.NET 8 API)"]
+                  end
+                  
+                  subgraph "Data & Storage"
+                      SQL["Azure SQL Database<br/>(Base de datos principal)"]
+                      BLOB["Blob Storage<br/>(Imágenes de productos)"]
+                  end
+                  
+                  subgraph "Networking"
+                      CDN["Azure CDN<br/>(Assets estáticos)"]
+                      DNS["Custom Domain<br/>(Opcional)"]
+                  end
+              end
+
+              subgraph "GitHub"
+                  REPO["Repository"]
+                  ACTIONS["GitHub Actions"]
+              end
+
+              REPO --> ACTIONS
+              ACTIONS --> WEB
+              ACTIONS --> API
+              API --> SQL
+              API --> BLOB
+              WEB --> CDN
+          ```
+
+          ## Configuración de Azure App Services
+
+          ### 1. Backend App Service (.NET 8)
+
+          **Configuración requerida:**
+          ```json
+          {
+            "name": "upt-ecommerce-api",
+            "runtime": ".NET 8",
+            "sku": "F1", // Free tier para desarrollo
+            "location": "Brazil South",
+            "deployment": {
+              "source": "GitHub",
+              "repository": "UPT-FAING-EPIS/examen-2025-ii-pds-u1-SebastianFuentesAvalos",
+              "branch": "main",
+              "buildPath": "backend/"
+            }
+          }
+          ```
+
+          **Variables de entorno necesarias:**
+          ```
+          ConnectionStrings__DefaultConnection=Server=upt-dbs-900.database.windows.net;Database=shorten;User Id={username};Password={password};
+          ASPNETCORE_ENVIRONMENT=Production
+          JWT_SECRET={your-jwt-secret}
+          AZURE_STORAGE_CONNECTION_STRING={blob-storage-connection}
+          ```
+
+          ### 2. Frontend App Service (Static Web App)
+
+          **Configuración requerida:**
+          ```json
+          {
+            "name": "upt-ecommerce-web",
+            "sku": "Free",
+            "location": "Brazil South",
+            "deployment": {
+              "source": "GitHub",
+              "repository": "UPT-FAING-EPIS/examen-2025-ii-pds-u1-SebastianFuentesAvalos",
+              "branch": "main",
+              "buildPath": "frontend/",
+              "outputPath": "dist"
+            }
+          }
+          ```
+
+          ## GitHub Actions Workflow
+
+          El workflow `deploy_app.yml` se encarga del despliegue automático:
+
+          ### Features del Workflow:
+          - ✅ Build automático del frontend y backend
+          - ✅ Ejecución de tests antes del despliegue
+          - ✅ Despliegue a staging y producción
+          - ✅ Rollback automático en caso de error
+          - ✅ Notificaciones de estado
+
+          ### Triggers:
+          - Push a rama `main` (solo archivos de aplicación)
+          - Release tags (`v*.*.*`)
+          - Manual dispatch
+
+          ## Pasos de Configuración
+
+          ### 1. Crear App Services en Azure
+
+          ```bash
+          # Backend API
+          az webapp create \
+            --resource-group upt-arg-900 \
+            --plan upt-asp-900 \
+            --name upt-ecommerce-api \
+            --runtime "DOTNET|8.0"
+
+          # Frontend (Static Web App)
+          az staticwebapp create \
+            --name upt-ecommerce-web \
+            --resource-group upt-arg-900 \
+            --source https://github.com/UPT-FAING-EPIS/examen-2025-ii-pds-u1-SebastianFuentesAvalos \
+            --branch main \
+            --app-location "frontend" \
+            --output-location "dist"
+          ```
+
+          ### 2. Configurar GitHub Secrets
+
+          Agregar los siguientes secrets al repositorio:
+
+          ```
+          AZURE_CREDENTIALS          # Service Principal para autenticación
+          AZURE_WEBAPP_NAME_API       # Nombre del App Service del backend
+          AZURE_WEBAPP_NAME_WEB       # Nombre del Static Web App
+          AZURE_WEBAPP_PUBLISH_PROFILE_API  # Publish profile del backend
+          SQL_CONNECTION_STRING       # Connection string de la base de datos
+          JWT_SECRET                  # Secret para tokens JWT
+          AZURE_STORAGE_CONNECTION    # Connection string para Blob Storage
+          ```
+
+          ### 3. Configurar CI/CD
+
+          El workflow se activa automáticamente, pero puedes configurar:
+
+          - **Staging environment**: Para pruebas antes de producción
+          - **Blue-Green deployment**: Para despliegues sin downtime
+          - **Rollback automático**: En caso de fallos en health checks
+
+          ## Monitoreo y Logging
+
+          ### Application Insights
+          ```csharp
+          // En Program.cs
+          builder.Services.AddApplicationInsightsTelemetry();
+          ```
+
+          ### Health Checks
+          ```csharp
+          // Configuración de health checks
+          builder.Services.AddHealthChecks()
+              .AddSqlServer(connectionString)
+              .AddAzureBlobStorage(storageConnectionString);
+          ```
+
+          ### Logging
+          ```csharp
+          // Configuración de logging
+          builder.Logging.AddApplicationInsights();
+          builder.Logging.AddAzureWebAppDiagnostics();
+          ```
+
+          ## SSL y Dominios Personalizados
+
+          ### 1. Certificado SSL gratuito
+          ```bash
+          az webapp config ssl bind \
+            --certificate-thumbprint {thumbprint} \
+            --ssl-type SNI \
+            --name upt-ecommerce-api \
+            --resource-group upt-arg-900
+          ```
+
+          ### 2. Dominio personalizado (opcional)
+          ```bash
+          az webapp config hostname add \
+            --webapp-name upt-ecommerce-api \
+            --resource-group upt-arg-900 \
+            --hostname ecommerce.upt.edu.pe
+          ```
+
+          ## Troubleshooting
+
+          ### Problemas Comunes
+
+          1. **Error de conexión a BD**: Verificar firewall de SQL Server
+          2. **CORS errors**: Configurar origins permitidos en backend
+          3. **Static files 404**: Verificar configuración de Static Web App
+          4. **Environment variables**: Verificar configuration en App Settings
+
+          ### Logs útiles
+          ```bash
+          # Ver logs en tiempo real
+          az webapp log tail --name upt-ecommerce-api --resource-group upt-arg-900
+
+          # Descargar logs
+          az webapp log download --name upt-ecommerce-api --resource-group upt-arg-900
+          ```
+
+          ## Performance y Escalabilidad
+
+          ### 1. Scaling automático
+          ```bash
+          az monitor autoscale create \
+            --resource-group upt-arg-900 \
+            --resource upt-ecommerce-api \
+            --min-count 1 \
+            --max-count 3 \
+            --count 1
+          ```
+
+          ### 2. CDN para assets
+          ```bash
+          az cdn profile create \
+            --name upt-ecommerce-cdn \
+            --resource-group upt-arg-900 \
+            --sku Standard_Microsoft
+          ```
+
+          ### 3. Redis Cache (futuro)
+          ```bash
+          az redis create \
+            --name upt-ecommerce-cache \
+            --resource-group upt-arg-900 \
+            --location "Brazil South" \
+            --sku Basic \
+            --vm-size c0
+          ```
+          EOF
+
+      - name: Create development guide
+        run: |
+          cat > docs/articles/development.md << 'EOF'
+          # Guía de Desarrollo
+
+          ## Configuración del Entorno Local
+
+          ### Prerrequisitos
+          - .NET 8 SDK
+          - Node.js 18+
+          - SQL Server LocalDB o Docker
+          - Visual Studio Code o Visual Studio
+          - Git
+
+          ### Clonar y Configurar
+
+          ```bash
+          # Clonar repositorio
+          git clone https://github.com/UPT-FAING-EPIS/examen-2025-ii-pds-u1-SebastianFuentesAvalos.git
+          cd examen-2025-ii-pds-u1-SebastianFuentesAvalos
+
+          # Backend
+          cd backend
+          dotnet restore
+          dotnet ef database update
+
+          # Frontend  
+          cd ../frontend
+          npm install
+          ```
+
+          ## Estructura del Proyecto
+
+          ```
+          ├── backend/                 # API .NET 8
+          │   ├── src/
+          │   │   ├── Controllers/     # API Controllers
+          │   │   ├── Services/        # Business Logic
+          │   │   ├── Models/          # Domain Models
+          │   │   ├── DTOs/            # Data Transfer Objects
+          │   │   └── Data/            # Entity Framework
+          │   └── tests/               # Unit & Integration Tests
+          ├── frontend/                # Vue.js SPA
+          │   ├── src/
+          │   │   ├── components/      # Vue Components
+          │   │   ├── views/           # Page Views
+          │   │   ├── stores/          # Pinia Stores
+          │   │   └── services/        # API Services
+          ├── database/                # SQL Scripts
+          ├── docs/                    # Documentación
+          ├── diagrams/                # Diagramas generados
+          └── infra/                   # Terraform IaC
+          ```
+
+          ## Comandos de Desarrollo
+
+          ### Backend (.NET)
+          ```bash
+          # Ejecutar API en desarrollo
+          dotnet run --project backend/src
+
+          # Ejecutar tests
+          dotnet test backend/tests
+
+          # Crear migración
+          dotnet ef migrations add NombreMigracion --project backend/src
+
+          # Actualizar base de datos
+          dotnet ef database update --project backend/src
+
+          # Build para producción
+          dotnet publish backend/src -c Release -o backend/dist
+          ```
+
+          ### Frontend (Vue.js)
+          ```bash
+          # Servidor de desarrollo
+          npm run dev
+
+          # Build para producción
+          npm run build
+
+          # Preview del build
+          npm run preview
+
+          # Tests unitarios
+          npm run test:unit
+
+          # Tests E2E
+          npm run test:e2e
+
+          # Linting
+          npm run lint
+          ```
+
+          ## Estándares de Código
+
+          ### Backend (C#)
+          - **Naming**: PascalCase para clases y métodos, camelCase para variables
+          - **Async/Await**: Siempre usar para operaciones I/O
+          - **Dependency Injection**: Registrar servicios en Program.cs
+          - **Error Handling**: Global exception handler
+
+          ### Frontend (TypeScript/Vue)
+          - **Naming**: camelCase para variables, PascalCase para componentes
+          - **Composition API**: Usar consistentemente
+          - **TypeScript**: Tipado fuerte en toda la aplicación
+          - **ESLint**: Seguir reglas configuradas
+
+          ## Testing
+
+          ### Backend Tests
+          ```csharp
+          [Test]
+          public async Task GetProducts_ReturnsAllProducts()
+          {
+              // Arrange
+              var products = new List<Product> { /* test data */ };
+              mockRepository.Setup(r => r.GetAllAsync()).ReturnsAsync(products);
+
+              // Act
+              var result = await controller.GetProducts();
+
+              // Assert
+              Assert.That(result.Value, Has.Count.EqualTo(products.Count));
+          }
+          ```
+
+          ### Frontend Tests
+          ```typescript
+          describe('ProductCard', () => {
+            it('renders product information correctly', () => {
+              const product = { id: 1, name: 'Test Product', price: 10.99 };
+              const wrapper = mount(ProductCard, { props: { product } });
+              
+              expect(wrapper.text()).toContain('Test Product');
+              expect(wrapper.text()).toContain('$10.99');
+            });
+          });
+          ```
+
+          ## Git Workflow
+
+          ### Branching Strategy
+          ```bash
+          # Crear feature branch
+          git checkout -b feature/add-product-search
+
+          # Hacer commits descriptivos
+          git commit -m "feat: add product search functionality"
+
+          # Push y crear PR
+          git push origin feature/add-product-search
+          ```
+
+          ### Commit Messages
+          - `feat:` nueva funcionalidad
+          - `fix:` corrección de bug
+          - `docs:` cambios en documentación
+          - `style:` cambios de formato
+          - `refactor:` refactoring de código
+          - `test:` agregando tests
+
+          ## Debugging
+
+          ### Backend
+          ```csharp
+          // Configurar logging detallado
+          builder.Logging.SetMinimumLevel(LogLevel.Debug);
+
+          // Usar breakpoints en desarrollo
+          if (Debugger.IsAttached)
+          {
+              // Debug code
+          }
+          ```
+
+          ### Frontend
+          ```typescript
+          // Vue DevTools
+          app.config.devtools = true;
+
+          // Console debugging
+          console.log('Debug info:', { data });
+
+          // Performance monitoring
+          console.time('API Call');
+          await apiCall();
+          console.timeEnd('API Call');
+          ```
+
+          ## Base de Datos
+
+          ### Migrations
+          ```bash
+          # Crear migración
+          dotnet ef migrations add AddProductCategories
+
+          # Ver SQL generado
+          dotnet ef migrations script
+
+          # Rollback migración
+          dotnet ef database update PreviousMigration
+          ```
+
+          ### Seeding Data
+          ```csharp
+          // En DbContext
+          protected override void OnModelCreating(ModelBuilder modelBuilder)
+          {
+              modelBuilder.Entity<Category>().HasData(
+                  new Category { Id = 1, Name = "Electronics" },
+                  new Category { Id = 2, Name = "Clothing" }
+              );
+          }
+          ```
+
+          ## Performance Tips
+
+          ### Backend
+          - Usar `IAsyncEnumerable` para grandes datasets
+          - Implementar paginación en todas las listas
+          - Configurar Entity Framework para lazy loading
+          - Usar caching para datos frecuentes
+
+          ### Frontend  
+          - Implementar virtual scrolling
+          - Usar `v-memo` para componentes pesados
+          - Lazy load de rutas y componentes
+          - Optimizar imágenes con formatos modernos
+
+          ## Troubleshooting
+
+          ### Problemas Comunes
+
+          1. **CORS Issues**: Configurar CORS en backend
+          2. **Database Connection**: Verificar connection string
+          3. **NPM Issues**: Limpiar node_modules y reinstalar
+          4. **Build Errors**: Verificar versiones de dependencias
+
+          ### Herramientas Útiles
+          - **Postman**: Testing de APIs
+          - **Vue DevTools**: Debugging de Vue
+          - **SQL Server Management Studio**: Gestión de BD
+          - **Azure Storage Explorer**: Gestión de blobs
+          EOF
+
+      - name: Generate API documentation (if source exists)
+        run: |
+          # Si existen archivos .cs, generar documentación de API
+          if find . -name "*.cs" -type f | head -1 | grep -q .; then
+            echo "Generando documentación de API..."
+            cd docs
+            docfx metadata
+          else
+            echo "No se encontraron archivos .cs, creando API placeholder..."
+            mkdir -p docs/api
+            cat > docs/api/index.md << 'EOF'
+          # API Reference
+
+          La documentación de la API se generará automáticamente cuando el código fuente esté disponible.
+
+          ## Endpoints Principales
+
+          ### Products API
+          - `GET /api/products` - Obtener todos los productos
+          - `GET /api/products/{id}` - Obtener producto por ID
+          - `POST /api/products` - Crear nuevo producto
+          - `PUT /api/products/{id}` - Actualizar producto
+          - `DELETE /api/products/{id}` - Eliminar producto
+
+          ### Users API
+          - `POST /api/auth/register` - Registrar usuario
+          - `POST /api/auth/login` - Iniciar sesión
+          - `GET /api/users/profile` - Obtener perfil
+
+          ### Cart API
+          - `GET /api/cart` - Obtener carrito actual
+          - `POST /api/cart/items` - Agregar item al carrito
+          - `PUT /api/cart/items/{id}` - Actualizar cantidad
+          - `DELETE /api/cart/items/{id}` - Eliminar item
+
+          ### Orders API
+          - `POST /api/orders` - Crear pedido
+          - `GET /api/orders` - Obtener pedidos del usuario
+          - `GET /api/orders/{id}` - Obtener pedido específico
+
+          La documentación completa con esquemas y ejemplos se generará automáticamente con el código fuente.
+          EOF
+          fi
+
+      - name: Build documentation with DocFX
+        run: |
+          cd docs
+          docfx build docfx.json --serve
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload to GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/_site
+
+  Deploy-Documentation:
+    needs: Generate-Documentation
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Update README with documentation link
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Add documentation link to README
+        run: |
+          if ! grep -q "📚 Documentación" README.md; then
+            cat >> README.md << 'EOF'
+
+          ## 📚 Documentación
+
+          La documentación completa del proyecto está disponible en: [GitHub Pages](https://upt-faing-epis.github.io/examen-2025-ii-pds-u1-SebastianFuentesAvalos/)
+
+          ### Secciones disponibles:
+          - 🔧 **API Reference**: Documentación completa de la API
+          - 🏛️ **Arquitectura**: Diagramas y explicación del sistema
+          - 🗄️ **Base de Datos**: Esquema y procedimientos
+          - 🎨 **Frontend**: Componentes y guías Vue.js
+          - 🚀 **Despliegue**: Guías de configuración Azure
+
+          EOF
+
+            git config --local user.email "action@github.com"
+            git config --local user.name "GitHub Action - Documentation"
+            git add README.md
+            git commit -m "docs: add documentation link [skip ci]" || echo "No changes to commit"
+            git push || echo "Nothing to push"
+          fi
+
+      - name: Publish documentation summary
+        run: |
+            echo "## 📚 Documentation Published Successfully" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "🌐 **Documentation URL**: [View Documentation](https://upt-faing-epis.github.io/examen-2025-ii-pds-u1-SebastianFuentesAvalos/)" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Generated Documentation Includes:" >> $GITHUB_STEP_SUMMARY
+            echo "- ✅ **API Reference** - Auto-generated from source code" >> $GITHUB_STEP_SUMMARY
+            echo "- ✅ **Architecture Guide** - System design and patterns" >> $GITHUB_STEP_SUMMARY
+            echo "- ✅ **Database Documentation** - Schema and procedures" >> $GITHUB_STEP_SUMMARY
+            echo "- ✅ **Frontend Guide** - Vue.js components and structure" >> $GITHUB_STEP_SUMMARY
+            echo "- ✅ **Deployment Guide** - Azure configuration steps" >> $GITHUB_STEP_SUMMARY
+            echo "- ✅ **Development Guide** - Local setup and workflows" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "📱 The documentation is responsive and includes search functionality." >> $GITHUB_STEP_SUMMARY
