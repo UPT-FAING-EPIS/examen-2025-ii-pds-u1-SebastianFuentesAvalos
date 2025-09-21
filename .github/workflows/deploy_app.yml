@@ -151,6 +151,12 @@ jobs:
             }
           }
           EOF
+          
+          # Crear .deployment para Azure
+          cat > .deployment << 'EOF'
+          [config]
+          command = npm install && npm start
+          EOF
 
       - name: Upload frontend artifact
         id: upload
@@ -240,7 +246,6 @@ jobs:
           app-name: ${{ env.AZURE_WEBAPP_NAME_WEB }}
           resource-group-name: ${{ env.AZURE_RESOURCE_GROUP_WEB }}
           package: ./frontend-app
-          startup-command: 'npx serve -s . -p $PORT'
 
   # ==================================================
   # JOB 5: BUILD SUMMARY
