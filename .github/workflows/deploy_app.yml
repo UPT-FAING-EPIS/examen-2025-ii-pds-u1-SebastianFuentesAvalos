@@ -1,6 +1,5 @@
 name: Build E-commerce Application - Debug Deploy
 
-
 on:
   push:
     branches: [ "main" ]
