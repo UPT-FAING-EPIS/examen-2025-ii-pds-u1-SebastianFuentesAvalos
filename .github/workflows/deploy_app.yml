@@ -60,15 +60,12 @@ jobs:
       - name: Publish application
         run: |
           cd backend/EcommerceApi
-          dotnet publish --configuration Release --no-build --output ./publish
-          
-      - name: List published files
-        run: |
-          cd backend/EcommerceApi/publish
+          echo "Publishing .NET application..."
+          dotnet publish --configuration Release --no-build --output ./publish --verbosity normal
           echo "=== FILES IN PUBLISH DIRECTORY ==="
-          ls -la
-          echo "=== CHECKING FOR DLL FILES ==="
-          find . -name "*.dll" -type f
+          ls -la ./publish
+          echo "=== DLL FILES ==="
+          find ./publish -name "*.dll" -type f
 
       - name: Upload backend artifact
         id: upload
@@ -176,12 +173,12 @@ jobs:
           name: backend-app
           path: ./backend-app
           
-      - name: List downloaded files
+      - name: Verify downloaded files
         run: |
-          echo "=== FILES IN BACKEND-APP DIRECTORY ==="
+          echo "=== DOWNLOADED BACKEND FILES ==="
           ls -la ./backend-app
-          echo "=== CHECKING FOR DLL FILES ==="
-          find ./backend-app -name "*.dll" -type f
+          echo "=== DLL FILES IN PACKAGE ==="
+          find ./backend-app -name "*.dll" -type f || echo "No DLL files found"
       - name: Login to Azure
         uses: azure/login@v1
         with:
