@@ -1295,7 +1295,6 @@ jobs:
       pages: write
       id-token: write
       contents: write
-    if: github.repository_owner == github.actor
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
