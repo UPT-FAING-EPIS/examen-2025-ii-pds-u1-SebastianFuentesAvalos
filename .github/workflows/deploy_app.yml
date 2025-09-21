@@ -61,6 +61,14 @@ jobs:
         run: |
           cd backend/EcommerceApi
           dotnet publish --configuration Release --no-build --output ./publish
+          
+      - name: List published files
+        run: |
+          cd backend/EcommerceApi/publish
+          echo "=== FILES IN PUBLISH DIRECTORY ==="
+          ls -la
+          echo "=== CHECKING FOR DLL FILES ==="
+          find . -name "*.dll" -type f
 
       - name: Upload backend artifact
         id: upload
@@ -167,6 +175,13 @@ jobs:
         with:
           name: backend-app
           path: ./backend-app
+          
+      - name: List downloaded files
+        run: |
+          echo "=== FILES IN BACKEND-APP DIRECTORY ==="
+          ls -la ./backend-app
+          echo "=== CHECKING FOR DLL FILES ==="
+          find ./backend-app -name "*.dll" -type f
       - name: Login to Azure
         uses: azure/login@v1
         with:
@@ -178,7 +193,6 @@ jobs:
           app-name: ${{ env.AZURE_WEBAPP_NAME_API }}
           resource-group-name: ${{ env.AZURE_RESOURCE_GROUP_API }}
           package: ./backend-app
-          startup-command: 'dotnet EcommerceApi.dll'
       - name: Configure App Settings
         uses: azure/appservice-settings@v1
         with:
@@ -211,6 +225,13 @@ jobs:
         with:
           name: frontend-app
           path: ./frontend-app
+          
+      - name: List frontend files
+        run: |
+          echo "=== FILES IN FRONTEND-APP DIRECTORY ==="
+          ls -la ./frontend-app
+          echo "=== CHECKING INDEX.HTML ==="
+          head -10 ./frontend-app/index.html
       - name: Login to Azure
         uses: azure/login@v1
         with:
@@ -222,7 +243,7 @@ jobs:
           app-name: ${{ env.AZURE_WEBAPP_NAME_WEB }}
           resource-group-name: ${{ env.AZURE_RESOURCE_GROUP_WEB }}
           package: ./frontend-app
-          startup-command: 'npx serve -s . -l 8080'
+          startup-command: 'npx serve -s . -p $PORT'
 
   # ==================================================
   # JOB 5: BUILD SUMMARY
