@@ -1,4 +1,4 @@
-name: Despliegue de Aplicación E-commerce
+name: Build E-commerce Application
 
 on:
   push:
@@ -7,8 +7,6 @@ on:
       - 'backend/**'
       - 'frontend/**'
       - '.github/workflows/deploy_app.yml'
-  release:
-    types: [published]
   workflow_dispatch:
 
 # Variables de entorno
@@ -107,191 +105,67 @@ jobs:
           retention-days: 1
 
   # ==================================================
-  # JOB 3: DEPLOY BACKEND TO AZURE APP SERVICE
+  # JOB 3: BUILD SUMMARY
   # ==================================================
-  Deploy-Backend:
-    needs: Build-Backend
+  Build-Summary:
+    needs: [Build-Backend, Build-Frontend]
     runs-on: ubuntu-latest
     
     steps:
-      - name: Download backend artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: backend-app
-          path: ./backend-app
-
-      - name: Login to Azure
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Deploy to Azure App Service
-        uses: azure/webapps-deploy@v2
-        with:
-          app-name: ${{ env.AZURE_WEBAPP_NAME_API }}
-          package: ./backend-app
-
-      - name: Configure App Settings
-        uses: azure/appservice-settings@v1
-        with:
-          app-name: ${{ env.AZURE_WEBAPP_NAME_API }}
-          app-settings-json: |
-            [
-              {
-                "name": "ASPNETCORE_ENVIRONMENT",
-                "value": "Production"
-              },
-              {
-                "name": "ConnectionStrings__DefaultConnection", 
-                "value": "${{ secrets.SQL_CONNECTION_STRING }}"
-              },
-              {
-                "name": "JWT__Secret",
-                "value": "${{ secrets.JWT_SECRET }}"
-              },
-              {
-                "name": "JWT__Issuer",
-                "value": "UPT-Ecommerce-API"
-              },
-              {
-                "name": "JWT__Audience", 
-                "value": "UPT-Ecommerce-App"
-              },
-              {
-                "name": "CORS__AllowedOrigins",
-                "value": "https://${{ env.AZURE_WEBAPP_NAME_WEB }}.azurewebsites.net"
-              }
-            ]
-
-      - name: Health Check
+      - name: Build Summary
         run: |
-          echo "Esperando que la API esté disponible..."
-          sleep 30
-          
-          # Health check de la API
-          API_URL="https://${{ env.AZURE_WEBAPP_NAME_API }}.azurewebsites.net"
-          
-          for i in {1..5}; do
-            if curl -f "$API_URL/health" || curl -f "$API_URL/api/products"; then
-              echo "✅ API está funcionando correctamente"
-              echo "🌐 URL: $API_URL"
-              break
-            else
-              echo "⏳ Intento $i/5 - API no está lista aún..."
-              sleep 15
-            fi
-          done
-
-  # ==================================================
-  # JOB 4: DEPLOY FRONTEND TO AZURE APP SERVICE
-  # ==================================================
-  Deploy-Frontend:
-    needs: [Build-Frontend, Deploy-Backend]
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Download frontend artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: frontend-app
-          path: ./frontend-app
-
-      - name: Login to Azure
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Deploy to Azure App Service
-        uses: azure/webapps-deploy@v2
-        with:
-          app-name: ${{ env.AZURE_WEBAPP_NAME_WEB }}
-          package: ./frontend-app
-
-      - name: Configure Frontend Environment
-        run: |
-          echo "Frontend desplegado exitosamente"
-          echo "🌐 URL: https://${{ env.AZURE_WEBAPP_NAME_WEB }}.azurewebsites.net"
-
-  # ==================================================
-  # JOB 5: SMOKE TESTS & NOTIFICATIONS
-  # ==================================================
-  Post-Deploy-Tests:
-    needs: [Deploy-Backend, Deploy-Frontend]
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Smoke Tests
-        run: |
-          echo "🧪 Ejecutando smoke tests..."
-          
-          # Test Backend API
-          API_URL="https://${{ env.AZURE_WEBAPP_NAME_API }}.azurewebsites.net"
-          echo "Testing API: $API_URL"
-          
-          if curl -f "$API_URL/api/products" --max-time 30; then
-            echo "✅ Backend API responde correctamente"
-          else
-            echo "❌ Backend API no responde"
-            exit 1
-          fi
-          
-          # Test Frontend
-          WEB_URL="https://${{ env.AZURE_WEBAPP_NAME_WEB }}.azurewebsites.net"
-          echo "Testing Frontend: $WEB_URL"
-          
-          if curl -f "$WEB_URL" --max-time 30; then
-            echo "✅ Frontend carga correctamente"
-          else
-            echo "⚠️  Frontend podría tener problemas de carga"
-          fi
-
-      - name: Deployment Summary
-        run: |
-          echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "## 🏗️ Build Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### ✅ Deployed Services" >> $GITHUB_STEP_SUMMARY
-          echo "- **Backend API**: https://${{ env.AZURE_WEBAPP_NAME_API }}.azurewebsites.net" >> $GITHUB_STEP_SUMMARY
-          echo "- **Frontend Web**: https://${{ env.AZURE_WEBAPP_NAME_WEB }}.azurewebsites.net" >> $GITHUB_STEP_SUMMARY
+          echo "### ✅ Built Successfully" >> $GITHUB_STEP_SUMMARY
+          echo "- **Backend**: .NET 8 API compiled successfully" >> $GITHUB_STEP_SUMMARY
+          echo "- **Frontend**: Vue.js app built successfully" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 🔧 Tech Stack" >> $GITHUB_STEP_SUMMARY
-          echo "- **Backend**: .NET 8 Web API" >> $GITHUB_STEP_SUMMARY
-          echo "- **Frontend**: Vue.js 3 SPA" >> $GITHUB_STEP_SUMMARY
-          echo "- **Database**: Azure SQL Database" >> $GITHUB_STEP_SUMMARY
-          echo "- **Hosting**: Azure App Services" >> $GITHUB_STEP_SUMMARY
+          echo "### 🚀 Ready for Deployment" >> $GITHUB_STEP_SUMMARY
+          echo "- **Backend URL**: Ready for https://${{ env.AZURE_WEBAPP_NAME_API }}.azurewebsites.net" >> $GITHUB_STEP_SUMMARY
+          echo "- **Frontend URL**: Ready for https://${{ env.AZURE_WEBAPP_NAME_WEB }}.azurewebsites.net" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 📊 Deployment Info" >> $GITHUB_STEP_SUMMARY
-          echo "- **Environment**: Production" >> $GITHUB_STEP_SUMMARY
-          echo "- **Deployment Time**: $(date)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Git Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "### 📝 Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "1. Configure Azure credentials in GitHub secrets" >> $GITHUB_STEP_SUMMARY
+          echo "2. Enable deployment jobs in workflow" >> $GITHUB_STEP_SUMMARY
+          echo "3. Set up database connection string" >> $GITHUB_STEP_SUMMARY
 
   # ==================================================
-  # JOB 6: ROLLBACK (Solo en caso de fallo)
+  # DEPLOYMENT JOBS (DISABLED - Enable after configuring secrets)
   # ==================================================
-  Rollback:
-    needs: [Deploy-Backend, Deploy-Frontend, Post-Deploy-Tests]
-    runs-on: ubuntu-latest
-    if: failure()
-    
-    steps:
-      - name: Login to Azure
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+  # Deploy-Backend:
+  #   needs: Build-Backend
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Download backend artifact
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: backend-app
+  #         path: ./backend-app
+  #     - name: Login to Azure
+  #       uses: azure/login@v1
+  #       with:
+  #         creds: ${{ secrets.AZURE_CREDENTIALS }}
+  #     - name: Deploy to Azure App Service
+  #       uses: azure/webapps-deploy@v2
+  #       with:
+  #         app-name: ${{ env.AZURE_WEBAPP_NAME_API }}
+  #         package: ./backend-app
 
-      - name: Rollback Backend
-        run: |
-          echo "🔄 Iniciando rollback del backend..."
-          # Aquí puedes agregar lógica de rollback específica
-          # Por ejemplo, restaurar a la slot de staging
-          
-      - name: Rollback Frontend  
-        run: |
-          echo "🔄 Iniciando rollback del frontend..."
-          # Lógica de rollback para frontend
-
-      - name: Notify Failure
-        run: |
-          echo "## ❌ Deployment Failed - Rollback Initiated" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "El despliegue falló y se ha iniciado el proceso de rollback." >> $GITHUB_STEP_SUMMARY
-          echo "Revisar los logs para más detalles." >> $GITHUB_STEP_SUMMARY
+  # Deploy-Frontend:
+  #   needs: Build-Frontend
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Download frontend artifact
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: frontend-app
+  #         path: ./frontend-app
+  #     - name: Login to Azure
+  #       uses: azure/login@v1
+  #       with:
+  #         creds: ${{ secrets.AZURE_CREDENTIALS }}
+  #     - name: Deploy to Azure App Service
+  #       uses: azure/webapps-deploy@v2
+  #       with:
+  #         app-name: ${{ env.AZURE_WEBAPP_NAME_WEB }}
+  #         package: ./frontend-app
