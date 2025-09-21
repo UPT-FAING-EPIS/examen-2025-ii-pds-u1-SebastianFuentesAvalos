@@ -11,8 +11,8 @@ on:
 
 # Variables de entorno
 env:
-  AZURE_WEBAPP_NAME_API: 'sebastian-ecommerce-api'     # Tu App Service del backend
-  AZURE_WEBAPP_NAME_WEB: 'sebastian-ecommerce-web'     # Tu App Service del frontend
+  AZURE_WEBAPP_NAME_API: 'sebastian-ecommerce-api'     # Nombre del App Service del backend
+  AZURE_WEBAPP_NAME_WEB: 'sebastian-ecommerce-web'     # Nombre del App Service del frontend
   DOTNET_VERSION: '8.0.x'
   NODE_VERSION: '20'
 
